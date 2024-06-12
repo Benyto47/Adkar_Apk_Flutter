@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:get/get.dart';
+import 'package:flutter_tts/flutter_tts.dart'; // Importation du package
 
 import '../model/text_position.dart';
 
@@ -65,6 +66,60 @@ class _DisplayPageState extends State<DisplayPage> {
       default:
         print('Item non reconnu');
     }
+  }
+
+  // Instance de FlutterTts
+  FlutterTts flutterTts = FlutterTts();
+  bool isPlaying = false; // État de la lecture
+
+  @override
+  void initState() {
+    super.initState();
+    configureTts();
+    // Ajouter l'écouteur pour l'événement de fin de lecture
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        isPlaying = false;
+      });
+    });
+  }
+
+  // Configure les paramètres TTS en fonction de la langue actuelle
+  void configureTts() async {
+    String currentLanguageCode = Get.locale?.languageCode ?? 'en';
+
+    // Réglez la vitesse de la parole (0.0 à 1.0)
+    await flutterTts.setSpeechRate(0.28); // Vitesse plus lente
+
+    // Réglez la hauteur de la parole (0.5 à 2.0)
+    await flutterTts.setPitch(1.0); // Tonalité normale
+
+     List<dynamic> voices = await flutterTts.getVoices;
+     print(voices);
+
+    if (currentLanguageCode == 'ar') {
+      // Définir la voix arabe
+      await flutterTts.setLanguage("ar");
+      await flutterTts
+          .setVoice({"name": "ar-xa-x-ard-local", "locale": "ar-SA"});
+    } else {
+      // Définir la voix anglaise
+      await flutterTts.setLanguage("en");
+      await flutterTts
+          .setVoice({"name": "en-us-x-sfg#male_2-local", "locale": "en-US"});
+    }
+  }
+
+  // Fonction pour basculer entre lecture et pause
+  void togglePlayback(String textToRead) async {
+    if (isPlaying) {
+      await flutterTts.pause();
+    } else {
+      await flutterTts.speak(textToRead);
+    }
+    setState(() {
+      isPlaying = !isPlaying;
+    });
   }
 
   @override
@@ -183,6 +238,17 @@ class _DisplayPageState extends State<DisplayPage> {
                         "\n\nDownload our app Adkar on Playstore");
                   },
                   icon: Icon(Icons.share),
+                  color: Colors.white,
+                ),
+                IconButton(
+                  onPressed: () async {
+                    // Texte actuel à lire
+                    String textToRead = listItemDetail.textAAfficher[ind2];
+
+                    // Basculer entre lecture et pause
+                    togglePlayback(textToRead);
+                  },
+                  icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
                   color: Colors.white,
                 ),
               ],

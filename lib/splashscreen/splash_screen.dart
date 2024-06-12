@@ -15,7 +15,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   splashScreenTimer(){
-    Timer(const Duration(seconds: 5), () async{
+    Timer(const Duration(seconds: 8), () async{
       Navigator.popAndPushNamed(context, "/home");
     });
   }
