@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "738082811071",
+    "project_id": "adkar-apk",
+    "storage_bucket": "adkar-apk.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:738082811071:android:261e6c3c2312e0e123ea0a",
+        "android_client_info": {
+          "package_name": "com.example.testapk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgIHhT9JVaMW8dNuhrVB0V10E1FO2RmZo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

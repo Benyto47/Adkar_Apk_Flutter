@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gcm_defaultSenderId" translatable="false">738082811071</string>
+    <string name="google_api_key" translatable="false">AIzaSyCgIHhT9JVaMW8dNuhrVB0V10E1FO2RmZo</string>
+    <string name="google_app_id" translatable="false">1:738082811071:android:261e6c3c2312e0e123ea0a</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCgIHhT9JVaMW8dNuhrVB0V10E1FO2RmZo</string>
+    <string name="google_storage_bucket" translatable="false">adkar-apk.appspot.com</string>
+    <string name="project_id" translatable="false">adkar-apk</string>
+</resources>
