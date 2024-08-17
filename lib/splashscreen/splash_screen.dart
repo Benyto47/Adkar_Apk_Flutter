@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:adkar_flutter/splashscreen/googleBouton.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/cupertino.dart';

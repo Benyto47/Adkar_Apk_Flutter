@@ -1,5 +1,6 @@
 import 'package:adkar_flutter/splashscreen/googleBouton.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -63,6 +64,19 @@ class _SignScreenState extends State<SignScreen> {
         email: _emailController.text.toLowerCase().trim(),
         password: _passwordController.text.trim(),
       );
+
+      final User? user = authInstance.currentUser;
+      final _uid = user!.uid;
+
+      await FirebaseFirestore.instance.collection('users').doc(_uid).set({
+        'id': _uid,
+        'name': _fullNameController.text,
+        'email': _emailController.text.toLowerCase(),
+        'userWish': [],
+        'createdAt': Timestamp.now(),
+      }
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User created successfully')),
       );

@@ -1,4 +1,5 @@
 import 'package:adkar_flutter/pages/display_page.dart';
+import 'package:adkar_flutter/pages/user_page.dart';
 import 'package:adkar_flutter/services/dictionary.dart';
 import 'package:adkar_flutter/splashscreen/sing_page.dart';
 import 'package:adkar_flutter/splashscreen/splash_screen.dart';
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
       "/home": (context) => HomePage(),
       "/details": (context) => DisplayPage(),
       "/about": (context) => AboutPage(),
+      "/userpage": (context) => UserPage()
     }
     );
   }

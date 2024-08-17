@@ -1,4 +1,5 @@
 import 'package:adkar_flutter/pages/detail_page.dart';
+import 'package:adkar_flutter/pages/user_page.dart'; // Importation de la page user
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:get/get.dart';
 import 'package:flutter_tts/flutter_tts.dart'; // Importation du package
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../model/text_position.dart';
 
@@ -22,7 +25,8 @@ class _DisplayPageState extends State<DisplayPage> {
     'shareApp'.tr, // Partager l'application
     'evaluationApp'.tr, // Évaluer l'application
     'facebookPage'.tr, // Page Facebook
-    'about'.tr // À propos
+    'about'.tr, // À propos
+    'wishlist'.tr, // Wishliste
   ];
 
   int ind2 = 0;
@@ -34,6 +38,7 @@ class _DisplayPageState extends State<DisplayPage> {
     'evaluationApp': 'evaluationApp'.tr,
     'facebookPage': 'facebookPage'.tr,
     'about': 'about'.tr,
+    'wishlist': 'wishlist'.tr,
   };
 
   // Fonction pour obtenir la clé originale à partir de la traduction
@@ -50,19 +55,21 @@ class _DisplayPageState extends State<DisplayPage> {
       case 'shareApp':
         Share.share("\n\nDownload our app Adkar on Playstore");
         break;
-
       case 'evaluationApp':
         launchUrl(url);
         break;
-
       case 'facebookPage':
         launchUrl(url);
         break;
-
       case 'about':
         Navigator.pushNamed(context, "/about");
         break;
-
+      case 'wishlist':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => UserPage()),
+        );
+        break;
       default:
         print('Item non reconnu');
     }
@@ -71,6 +78,10 @@ class _DisplayPageState extends State<DisplayPage> {
   // Instance de FlutterTts
   FlutterTts flutterTts = FlutterTts();
   bool isPlaying = false; // État de la lecture
+
+  // Page controller
+  PageController _pageController = PageController();
+  bool isCurrentTextLiked = false;
 
   @override
   void initState() {
@@ -81,6 +92,14 @@ class _DisplayPageState extends State<DisplayPage> {
       setState(() {
         isPlaying = false;
       });
+    });
+
+    // Écouteur de changement de page
+    _pageController.addListener(() {
+      setState(() {
+        ind2 = _pageController.page?.toInt() ?? 0;
+      });
+      _updateLikeStatus();
     });
   }
 
@@ -94,8 +113,8 @@ class _DisplayPageState extends State<DisplayPage> {
     // Réglez la hauteur de la parole (0.5 à 2.0)
     await flutterTts.setPitch(1.0); // Tonalité normale
 
-     List<dynamic> voices = await flutterTts.getVoices;
-     print(voices);
+    List<dynamic> voices = await flutterTts.getVoices;
+    print(voices);
 
     if (currentLanguageCode == 'ar') {
       // Définir la voix arabe
@@ -119,6 +138,117 @@ class _DisplayPageState extends State<DisplayPage> {
     }
     setState(() {
       isPlaying = !isPlaying;
+    });
+  }
+
+  Future<bool> _isTextLiked(
+      String itemName, int itemNumber, String itemText) async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final _uid = user.uid;
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(_uid).get();
+
+      if (doc.exists && doc.data() != null && doc.data()!['userWish'] != null) {
+        final userWish = List.from(doc.data()!['userWish']);
+        return userWish.any((item) =>
+            item['itemName'] == itemName &&
+            item['itemNumber'] == itemNumber &&
+            item['itemText'] == itemText);
+      }
+    }
+    return false;
+  }
+
+  Future<void> _toggleUserWish(
+      String itemName, int itemNumber, String itemText) async {
+    try {
+      final User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final _uid = user.uid;
+        final docRef = FirebaseFirestore.instance.collection('users').doc(_uid);
+        final doc = await docRef.get();
+
+        if (doc.exists &&
+            doc.data() != null &&
+            doc.data()!['userWish'] != null) {
+          final userWish = List.from(doc.data()!['userWish']);
+          final isLiked = userWish.any((item) =>
+              item['itemName'] == itemName &&
+              item['itemNumber'] == itemNumber &&
+              item['itemText'] == itemText);
+
+          if (isLiked) {
+            // Supprimer l'élément de userWish
+            await docRef.update({
+              'userWish': FieldValue.arrayRemove([
+                {
+                  'itemName': itemName,
+                  'itemNumber': itemNumber,
+                  'itemText': itemText,
+                }
+              ])
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Removed from your wishes')),
+            );
+          } else {
+            // Ajouter l'élément à userWish
+            await docRef.update({
+              'userWish': FieldValue.arrayUnion([
+                {
+                  'itemName': itemName,
+                  'itemNumber': itemNumber,
+                  'itemText': itemText,
+                }
+              ])
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Added to your wishes')),
+            );
+          }
+        } else {
+          // Ajouter l'élément à userWish
+          await docRef.update({
+            'userWish': FieldValue.arrayUnion([
+              {
+                'itemName': itemName,
+                'itemNumber': itemNumber,
+                'itemText': itemText,
+              }
+            ])
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Added to your wishes')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not authenticated')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating wishes: $error')),
+      );
+    }
+  }
+
+  void _updateLikeStatus() async {
+    TextAndPosition listItemDetail =
+        ModalRoute.of(context)!.settings.arguments as TextAndPosition;
+
+    String itemName = listItemDetail.name.contains("\n")
+        ? listItemDetail.name.split("\n")[0] +
+            " " +
+            listItemDetail.name.split("\n")[1]
+        : listItemDetail.name;
+
+    bool isLiked = await _isTextLiked(
+        itemName, ind2 + 1, listItemDetail.textAAfficher[ind2]);
+
+    setState(() {
+      isCurrentTextLiked = isLiked;
     });
   }
 
@@ -197,10 +327,10 @@ class _DisplayPageState extends State<DisplayPage> {
                 ),
               ),
               child: PageView.builder(
+                controller: _pageController,
                 reverse: true,
                 itemCount: listItemDetail.textAAfficher.length,
                 itemBuilder: (context, index) {
-                  ind2 = index;
                   return DetailPage(
                     numPage: index + 1,
                     totalPages: listItemDetail.textAAfficher.length,
@@ -250,6 +380,17 @@ class _DisplayPageState extends State<DisplayPage> {
                   },
                   icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
                   color: Colors.white,
+                ),
+                IconButton(
+                  onPressed: () async {
+                    await _toggleUserWish(
+                        itemName, ind2 + 1, listItemDetail.textAAfficher[ind2]);
+                    _updateLikeStatus(); // Met à jour l'état du bouton like
+                  },
+                  icon: Icon(
+                    isCurrentTextLiked ? Icons.favorite : Icons.favorite_border,
+                    color: isCurrentTextLiked ? Colors.red : Colors.white,
+                  ),
                 ),
               ],
             ),
